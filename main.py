@@ -11,6 +11,9 @@ class LaneDetection:
         
         self.lastLeftLane = None
         self.lastRightLane = None
+        
+        self.leftCords = None
+        self.rightCords = None
     
     def __getVideoCapture(self, fileName):
         """ return the video capture object 
@@ -128,7 +131,29 @@ class LaneDetection:
         else:
             self.lastRightLane = rightAvrage
         
-        self.linesDetected = np.array([self.__getCordinates(leftAvrage), self.__getCordinates(rightAvrage)])
+        self.leftCords = self.__getCordinates(leftAvrage)
+        self.rightCords = self.__getCordinates(rightAvrage)
+        self.linesDetected = np.array([self.leftCords, self.rightCords])
+    
+    def __drawMiddleLine(self):
+        """ draw a line in the middle of the image, and check if the diffrence between the lines are towrad the right or left """
+        
+        middlePointTop = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 50)
+        middlePointBottom = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 30)
+        middlePointText = (int(self.originalFrame.shape[1] / 2) - 70, self.originalFrame.shape[0] - 10)
+        diffrence = self.rightCords[0] - self.leftCords[0]
+        
+        cv2.line(self.originalFrame, middlePointBottom, middlePointTop, (255, 0, 0), 10)
+        
+        if diffrence < 640:
+            print("diffrence smaller than 640, maybe go left")
+        elif diffrence > 740:
+            print("diffrence biiger than 740, maybe go Right")
+
+        cv2.putText(self.originalFrame, "diffrence: {}".format(diffrence),
+                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2, 2)
+    
+        
     
     def __detectLines(self, threshold = 100, radiusStep = 2, angleStep = np.pi / 180.0):  # 250
         """ detect lines in the image and show it """
@@ -137,6 +162,7 @@ class LaneDetection:
         # self.linesDetected = cv2.HoughLines(self.currentFrame, radiusStep, angleStep, threshold)
         self.__detectSides()
         self.__createLines()
+        self.__drawMiddleLine()
     
     def __showCurrentImage(self):
         """ show the original image """
@@ -158,7 +184,6 @@ class LaneDetection:
         self.__cropImage()
         self.__detectLines()
         self.__showCurrentImage()
-        
         
     def detect(self, videoFileName):
         """ main function to detect lines in the video and show it """
