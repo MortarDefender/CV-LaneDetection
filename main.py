@@ -53,7 +53,7 @@ class LaneDetection:
         kernel[:,2] = 1
         self.currentFrame = cv2.dilate(self.currentFrame, kernel, iterations = 1)
     
-    def __detectEdges(self, lowThreshold = 50, highThreshold = 150): # 300, 700
+    def __detectEdges(self, lowThreshold = 50, highThreshold = 450): # 300, 700
         """ detect the edges of the currentFrame using Canny """
         
         self.currentFrame = cv2.Canny(self.currentFrame, lowThreshold, highThreshold)
@@ -87,7 +87,7 @@ class LaneDetection:
         try:
             for x1, y1, x2, y2 in self.linesDetected:
                 cv2.line(lines_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
-                # cv2.line(self.originalFrame, (x1, y1), (x2, y2), (255, 0, 0), 10)
+                
         except ValueError:
             print(self.linesDetected)
             for item in self.linesDetected:
@@ -144,6 +144,9 @@ class LaneDetection:
             rightAvrage = self.lastRightLane
         else:
             self.lastRightLane = rightAvrage
+        
+        if leftAvrage is None or rightAvrage is None:
+            return None
         
         self.leftCords = self.__getCordinates(leftAvrage)
         self.rightCords = self.__getCordinates(rightAvrage)
@@ -205,11 +208,11 @@ class LaneDetection:
         self.__detectLines()
         self.__showCurrentImage()
         
-    def detect(self, videoFileName, outputFileName = "output.avi"):
+    def detect(self, videoFileName, outputFileName = "output.avi", videoOutput = True):
         """ main function to detect lines in the video and show it """
         
-        videoCapture = self.__getVideoCapture(videoFileName)
         videoWriter = None
+        videoCapture = self.__getVideoCapture(videoFileName)
         
         if videoCapture is not None:
             while videoCapture.isOpened():
@@ -218,17 +221,20 @@ class LaneDetection:
                 if not ret or self.__quitDetected():
                     break
                 
-                if videoWriter is None:
+                if videoOutput and videoWriter is None:
                     videoWriter = self.__getVideoWriter(self.originalFrame, outputFileName)
                 
                 self.currentFrame = self.originalFrame.copy()
                 
                 self.__detectLinesInImage()
                 
-                videoWriter.write(self.originalFrame)
+                if videoOutput:
+                    videoWriter.write(self.originalFrame)
 
             videoCapture.release()
-            videoWriter.release()
+            
+            if videoOutput:
+                videoWriter.release()
         cv2.destroyAllWindows()
 
 
@@ -238,4 +244,4 @@ if __name__ == '__main__':
     
     # LaneDetection().detect("dashCam.mp4")
     # LaneDetection().detectLinesInImage(cv2.imread(config['test_image']))
-    LaneDetection().detect(config['test_video'])
+    LaneDetection().detect(config['test_video'], videoOutput=False)
