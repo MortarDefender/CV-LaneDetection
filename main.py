@@ -27,6 +27,13 @@ class LaneDetection:
         
         return capture
     
+    def __getVideoWriter(self, sampleImage, outputFileName):
+        """ return the video writer object """
+        
+        height, width, layers = sampleImage.shape
+        videoWriter = cv2.VideoWriter(outputFileName, cv2.VideoWriter_fourcc(*"XVID"), 30, (width, height))
+        return videoWriter
+        
     def __convertToGrey(self):
         """ convert the currentFrame into grey scale """
         
@@ -46,7 +53,7 @@ class LaneDetection:
         kernel[:,2] = 1
         self.currentFrame = cv2.dilate(self.currentFrame, kernel, iterations = 1)
     
-    def __detectEdges(self, lowThreshold = 50, highThreshold = 150):  # 300, 700
+    def __detectEdges(self, lowThreshold = 50, highThreshold = 150): # 300, 700
         """ detect the edges of the currentFrame using Canny """
         
         self.currentFrame = cv2.Canny(self.currentFrame, lowThreshold, highThreshold)
@@ -59,7 +66,7 @@ class LaneDetection:
     def __cropImage(self):
         """ set the currentFrame to the road in a triangle shape """
         
-        height = self.currentFrame.shape[0] # - 80
+        height = self.currentFrame.shape[0]
         topMiddlePoint = (550, 250)
         buttomRightPoint = (1100, height)
         buttomLeftPoint = (200, height)
@@ -83,6 +90,10 @@ class LaneDetection:
                 # cv2.line(self.originalFrame, (x1, y1), (x2, y2), (255, 0, 0), 10)
         except ValueError:
             print(self.linesDetected)
+            for item in self.linesDetected:
+                for line in item:
+                    x1, y1, x2, y2 = line
+                    cv2.line(lines_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
         
         self.originalFrame = cv2.addWeighted(self.originalFrame, 0.8, lines_image, 1, 1)
     
@@ -112,6 +123,9 @@ class LaneDetection:
             slope = parameters[0]
             intercept = parameters[1]
             
+            if -0.2 < slope < 0.2:
+                continue
+            
             if slope < 0:
                 leftLane.append((slope, intercept)) 
             else:
@@ -138,6 +152,9 @@ class LaneDetection:
     def __drawMiddleLine(self):
         """ draw a line in the middle of the image, and check if the diffrence between the lines are towrad the right or left """
         
+        if self.rightCords is None:
+            return None
+        
         middlePointTop = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 50)
         middlePointBottom = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 30)
         middlePointText = (int(self.originalFrame.shape[1] / 2) - 70, self.originalFrame.shape[0] - 10)
@@ -146,15 +163,14 @@ class LaneDetection:
         cv2.line(self.originalFrame, middlePointBottom, middlePointTop, (255, 0, 0), 10)
         
         if diffrence < 640:
-            print("diffrence smaller than 640, maybe go left")
-        elif diffrence > 740:
-            print("diffrence biiger than 740, maybe go Right")
+            pass # print("diffrence smaller than 640, maybe go left")
+        elif diffrence > 750:
+            pass # print("diffrence biiger than 740, maybe go Right")
 
         cv2.putText(self.originalFrame, "diffrence: {}".format(diffrence),
-                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0), 2, 2)
+                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2, 2)
     
         
-    
     def __detectLines(self, threshold = 100, radiusStep = 2, angleStep = np.pi / 180.0):  # 250
         """ detect lines in the image and show it """
         
@@ -174,8 +190,12 @@ class LaneDetection:
         
         return cv2.waitKey(25) & 0xFF == ord('q')
     
-    def __detectLinesInImage(self):
+    def __detectLinesInImage(self, image=None):
         """ detect lines in one image per time """
+        
+        if image is not None:
+            self.originalFrame = image
+            self.currentFrame = self.originalFrame.copy()
         
         self.__convertToGrey()
         self.__removeNoise()
@@ -185,26 +205,30 @@ class LaneDetection:
         self.__detectLines()
         self.__showCurrentImage()
         
-    def detect(self, videoFileName):
+    def detect(self, videoFileName, outputFileName = "output.avi"):
         """ main function to detect lines in the video and show it """
         
         videoCapture = self.__getVideoCapture(videoFileName)
+        videoWriter = None
         
         if videoCapture is not None:
             while videoCapture.isOpened():
                 ret, self.originalFrame = videoCapture.read()
                 
-                if self.originalFrame is None:
+                if not ret or self.__quitDetected():
                     break
+                
+                if videoWriter is None:
+                    videoWriter = self.__getVideoWriter(self.originalFrame, outputFileName)
                 
                 self.currentFrame = self.originalFrame.copy()
                 
                 self.__detectLinesInImage()
                 
-                if ret and self.__quitDetected():
-                    break
+                videoWriter.write(self.originalFrame)
 
             videoCapture.release()
+            videoWriter.release()
         cv2.destroyAllWindows()
 
 
@@ -213,5 +237,5 @@ if __name__ == '__main__':
         config = json.load(json_file)
     
     # LaneDetection().detect("dashCam.mp4")
-    # LaneDetection().detect(config['test_image'])
+    # LaneDetection().detectLinesInImage(cv2.imread(config['test_image']))
     LaneDetection().detect(config['test_video'])
