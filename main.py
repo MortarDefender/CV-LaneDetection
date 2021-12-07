@@ -39,7 +39,7 @@ class LaneDetection:
         
         self.currentFrame = cv2.cvtColor(self.currentFrame, cv2.COLOR_BGR2GRAY)
     
-    def __removeNoise(self, d = 5, sigma = 0):
+    def __removeNoise(self, d = 7, sigma = 5):
         """ remove noise from the curretnFrame using guassin / bilateralFilter """
         
         self.currentFrame = cv2.GaussianBlur(self.currentFrame, (d, d), sigma)
@@ -53,7 +53,7 @@ class LaneDetection:
         kernel[:,2] = 1
         self.currentFrame = cv2.dilate(self.currentFrame, kernel, iterations = 1)
     
-    def __detectEdges(self, lowThreshold = 50, highThreshold = 450): # 300, 700
+    def __detectEdges(self, lowThreshold = 50, highThreshold = 150): # 300, 700
         """ detect the edges of the currentFrame using Canny """
         
         self.currentFrame = cv2.Canny(self.currentFrame, lowThreshold, highThreshold)
@@ -67,9 +67,9 @@ class LaneDetection:
         """ set the currentFrame to the road in a triangle shape """
         
         height = self.currentFrame.shape[0]
-        topMiddlePoint = (550, 250)
-        buttomRightPoint = (1100, height)
-        buttomLeftPoint = (200, height)
+        topMiddlePoint = (580, 340) # topMiddlePoint = (550, 250)
+        buttomRightPoint = (1200, height)
+        buttomLeftPoint = (150, height)
         polygons = np.array([[buttomLeftPoint, buttomRightPoint, topMiddlePoint]])
         
         mask = np.zeros_like(self.currentFrame)
@@ -161,14 +161,15 @@ class LaneDetection:
         middlePointTop = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 50)
         middlePointBottom = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 30)
         middlePointText = (int(self.originalFrame.shape[1] / 2) - 70, self.originalFrame.shape[0] - 10)
-        diffrence = self.rightCords[0] - self.leftCords[0]
+        # diffrence = self.rightCords[0] - self.leftCords[0]
+        diffrence = (self.rightCords[0] - int(self.originalFrame.shape[1] / 2)) - (int(self.originalFrame.shape[1] / 2) - self.leftCords[0])
         
         cv2.line(self.originalFrame, middlePointBottom, middlePointTop, (255, 0, 0), 10)
         
-        if diffrence < 640:
-            pass # print("diffrence smaller than 640, maybe go left")
-        elif diffrence > 750:
-            pass # print("diffrence biiger than 740, maybe go Right")
+        if diffrence > 400:
+            print("maybe go left --> {}".format(diffrence))
+        elif diffrence < -400:
+            print("maybe go Right -> {}".format(diffrence))
 
         cv2.putText(self.originalFrame, "diffrence: {}".format(diffrence),
                     middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2, 2)
@@ -186,7 +187,7 @@ class LaneDetection:
     def __showCurrentImage(self):
         """ show the original image """
         
-        cv2.imshow('Frame', self.originalFrame)
+        cv2.imshow('Frame', self.originalFrame) # currentFrame # originalFrame
     
     def __quitDetected(self):
         """ check if the user wants to quit """
@@ -202,8 +203,8 @@ class LaneDetection:
         
         self.__convertToGrey()
         self.__removeNoise()
-        self.__detectEdges()
         # self.__dilateFrame()
+        self.__detectEdges()
         self.__cropImage()
         self.__detectLines()
         self.__showCurrentImage()
