@@ -197,7 +197,7 @@ class LaneDetection:
         
         middlePointTop = (int(self.__originalFrame.shape[1] / 2), self.__originalFrame.shape[0] - 50)
         middlePointBottom = (int(self.__originalFrame.shape[1] / 2), self.__originalFrame.shape[0] - 30)
-        middlePointText = (int(self.__originalFrame.shape[1] / 2) - 70, self.__originalFrame.shape[0] - 10)
+        middlePointText = (int(self.__originalFrame.shape[1] / 2) - 60, 100)
         # middlePointText = (int(self.originalFrame.shape[1] / 2) - 200, 200) # for Shachar's vid
         # diffrence = (self.__rightCords[0] - int(self.__originalFrame.shape[1] / 2)) - (int(self.__originalFrame.shape[1] / 2) - self.__leftCords[0])
         
@@ -213,11 +213,14 @@ class LaneDetection:
         #     self.__movementDirection = self.__Direction.STRIGHT
 
         middle_x = int(self.__originalFrame.shape[1] / 2)
+        distance_th = 100
+        cv2.line(self.__originalFrame, (middle_x - distance_th, middlePointBottom[1]), (middle_x - 100, middlePointTop[1]), (0, 0, 255), 10)
+        cv2.line(self.__originalFrame, (middle_x + distance_th, middlePointBottom[1]), (middle_x + 100, middlePointTop[1]), (0, 0, 255), 10)
+
         # Check left
-        left_th = 100
         count_left = 0
         for left_x in self.__prevLeft:
-            if abs(left_x - middle_x) < left_th:
+            if abs(left_x - middle_x) < distance_th:
                 count_left += 1
         if count_left >= 5 and self.__movementDirection != LaneDetection.__Direction.RIGHT:
             # print('Going Left!')
@@ -227,27 +230,28 @@ class LaneDetection:
             self.__movementDirection = LaneDetection.__Direction.STRIGHT
 
         # Check right
-        right_th = 100
         count_right = 0
         for right_x in self.__prevRight:
-            if abs(right_x - middle_x) < right_th:
+            if abs(right_x - middle_x) < distance_th:
                 count_right += 1
-        if count_right >= 5 and self.lane_change != LaneDetection.__Direction.LEFT:
+        if count_right >= 5 and self.__movementDirection != LaneDetection.__Direction.LEFT:
             # print('Going Right!')
             self.__movementDirection = LaneDetection.__Direction.RIGHT
         elif self.__movementDirection == LaneDetection.__Direction.RIGHT:
             # print('Finish Going Right!')
             self.__movementDirection = LaneDetection.__Direction.STRIGHT
-        # cv2.putText(self.__originalFrame, "diffrence: {}".format(diffrence),
-        #             middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2, 2)
 
         display_text = ''
         if self.__movementDirection == LaneDetection.__Direction.RIGHT:
             display_text = 'right'
         elif self.__movementDirection == LaneDetection.__Direction.LEFT:
             display_text = 'left'
+
+
+        # cv2.putText(self.__originalFrame, display_text,
+        #             middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2, 2)
         cv2.putText(self.__originalFrame, display_text,
-                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255), 10, 2)
+                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 5, 2)
         
     def __detectLines(self, threshold = 100, radiusStep = 2, angleStep = np.pi / 180.0):  # 250
         """ detect lines in the image and show it """
