@@ -14,6 +14,11 @@ class LaneDetection:
         
         self.leftCords = None
         self.rightCords = None
+
+        self.prevLeft = []
+        self.prevRight = []
+        self.lane_change = ''
+        self.frame = 0
     
     def __getVideoCapture(self, fileName):
         """ return the video capture object 
@@ -67,13 +72,20 @@ class LaneDetection:
         """ set the currentFrame to the road in a triangle shape """
         
         height = self.currentFrame.shape[0]
-        topMiddlePoint = (550, 250)
-        buttomRightPoint = (1100, height)
-        buttomLeftPoint = (200, height)
-        polygons = np.array([[buttomLeftPoint, buttomRightPoint, topMiddlePoint]])
-        
+        left_x = 440
+        right_x = 1500
+        topMiddlePoint = ((right_x + left_x) / 2, 250)
+        buttomRightPoint = (right_x, height)
+        buttomLeftPoint = (left_x, height)
+        polygons = np.array([[buttomLeftPoint, buttomRightPoint, topMiddlePoint]]).astype(np.int)
+
+        new_left_point = ((buttomLeftPoint[0] + topMiddlePoint[0]) / 2, (buttomLeftPoint[1] + topMiddlePoint[1]) / 2)
+        new_right_point = ((buttomRightPoint[0] + topMiddlePoint[0]) / 2, (buttomRightPoint[1] + topMiddlePoint[1]) / 2)
+        polygons2 = np.array([[new_left_point, new_right_point, topMiddlePoint]]).astype(np.int)
+
         mask = np.zeros_like(self.currentFrame)
         cv2.fillPoly(mask, polygons, 255)
+        cv2.fillPoly(mask, polygons2, 0)
         self.currentFrame = cv2.bitwise_and(self.currentFrame, mask)
     
     def __createLines(self, maxDistance = 200, maxAngle = 1.2):
@@ -99,7 +111,10 @@ class LaneDetection:
     
     def __getCordinates(self, parameters):
         """ return the coedinates of the slope and intercept given using linear algebra """
-        
+
+        if parameters is None:
+            return np.array([0, 0, 0, 0])
+
         slope, intercept = parameters
         y1 = self.currentFrame.shape[0]
         y2 = int(y1 * (3 / 5))
@@ -113,7 +128,9 @@ class LaneDetection:
         
         leftLane = []
         rightLane = []
-        
+
+        self.frame += 1  # DEBUG
+
         if self.linesDetected is None or type(self.linesDetected) is None:
             return None
         
@@ -122,7 +139,7 @@ class LaneDetection:
             parameters = np.polyfit((x1, x2), (y1, y2), 1)
             slope = parameters[0]
             intercept = parameters[1]
-            
+
             if -0.2 < slope < 0.2:
                 continue
             
@@ -134,7 +151,11 @@ class LaneDetection:
         
         leftAvrage = np.average(leftLane, axis = 0)
         rightAvrage = np.average(rightLane, axis = 0)
-        
+
+        if self.frame % 30 == 0:
+            # print(f'Frame {self.frame} - Slope: {slope}, Intercept: {intercept}')  # DEBUG
+            print(f'Frame {self.frame} - {self.prevLeft}')  # DEBUG
+
         if type(leftAvrage) is np.float64:
             leftAvrage = self.lastLeftLane
         else:
@@ -147,6 +168,14 @@ class LaneDetection:
         
         self.leftCords = self.__getCordinates(leftAvrage)
         self.rightCords = self.__getCordinates(rightAvrage)
+
+        self.prevLeft.append(self.leftCords[0])
+        if len(self.prevLeft) > 10:
+            _ = self.prevLeft.pop(0)
+        self.prevRight.append(self.rightCords[0])
+        if len(self.prevLeft) > 10:
+            _ = self.prevLeft.pop(0)
+
         self.linesDetected = np.array([self.leftCords, self.rightCords])
     
     def __drawMiddleLine(self):
@@ -157,18 +186,45 @@ class LaneDetection:
         
         middlePointTop = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 50)
         middlePointBottom = (int(self.originalFrame.shape[1] / 2), self.originalFrame.shape[0] - 30)
-        middlePointText = (int(self.originalFrame.shape[1] / 2) - 70, self.originalFrame.shape[0] - 10)
-        diffrence = self.rightCords[0] - self.leftCords[0]
+        middlePointText = (int(self.originalFrame.shape[1] / 2) - 200, 200)#self.originalFrame.shape[0] - 10)
+        # diffrence = self.rightCords[0] - self.leftCords[0]
         
         cv2.line(self.originalFrame, middlePointBottom, middlePointTop, (255, 0, 0), 10)
-        
-        if diffrence < 640:
-            pass # print("diffrence smaller than 640, maybe go left")
-        elif diffrence > 750:
-            pass # print("diffrence biiger than 740, maybe go Right")
 
-        cv2.putText(self.originalFrame, "diffrence: {}".format(diffrence),
-                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2, 2)
+        middle_x = int(self.originalFrame.shape[1] / 2)
+
+        left_th = 100
+        count_left = 0
+        for left_x in self.prevLeft:
+            if abs(left_x - middle_x) < left_th:
+                count_left += 1
+        if count_left >= 5 and self.lane_change != 'Right':
+            print('Going Left!')
+            self.lane_change = 'Left'
+        elif self.lane_change == 'Left':
+            print('Finish Going Left!')
+            self.lane_change = ''
+
+
+        right_th = 100
+        count_right = 0
+        for right_x in self.prevRight:
+            if abs(right_x - middle_x) < right_th:
+                count_right += 1
+        if count_right >= 5 and self.lane_change != 'Left':
+            print('Going Right!')
+            self.lane_change = 'right'
+        elif self.lane_change == 'Right':
+            print('Finish Going Right!')
+            self.lane_change = ''
+
+        # if diffrence < 640:
+        #     pass # print("diffrence smaller than 640, maybe go left")
+        # elif diffrence > 750:
+        #     pass # print("diffrence biiger than 740, maybe go Right")
+
+        cv2.putText(self.originalFrame, self.lane_change,
+                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 255  ), 10, 2)
     
         
     def __detectLines(self, threshold = 100, radiusStep = 2, angleStep = np.pi / 180.0):  # 250
@@ -184,6 +240,7 @@ class LaneDetection:
         """ show the original image """
         
         cv2.imshow('Frame', self.originalFrame)
+        # cv2.imshow('Frame', self.currentFrame)
     
     def __quitDetected(self):
         """ check if the user wants to quit """
@@ -238,4 +295,5 @@ if __name__ == '__main__':
     
     # LaneDetection().detect("dashCam.mp4")
     # LaneDetection().detectLinesInImage(cv2.imread(config['test_image']))
-    LaneDetection().detect(config['test_video'])
+    # LaneDetection().detect(config['test_video'])
+    LaneDetection().detect('Tests/test_video_Trim.mp4')
