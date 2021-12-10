@@ -27,23 +27,20 @@ zero, aka horizontal lines because the lines of the lane are not a horizontal li
 
 ### Here a few examples of what the system outputs are:
 
-[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX1.png" />][link]
+[<img align="left" width="47%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX1.png" />][link]
+[<img align="right" width="47%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX2.png" />][link]
 
-***
-
-[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX2.png" />][link]
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 
 ### Here are a few pictures of behind the scenes that show how the computer see the image.
 The left one shows the picture in grey scale without the blur effect with canny
 and the right one shows the picture in grey scale with the blur effect.
 
-[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithNoise.png" />][link]
 
-***
+[<img align="left" width="47%" height="250px" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithNoise.png" />][link]
+[<img align="right" width="47%" height="250px" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithoutNoise.png" />][link]
 
-[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithoutNoise.png" />][link]
-
-<br />
+<br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
 
 As we can see the addition of the blur effect reduces noise and irrelevant point of
 interest that the computer can mistake for points of a line.
