@@ -1,5 +1,23 @@
 # Computer vision: lane detection
 
+## System Requirments:
+- python 3.6 or heighr
+- cv2 library
+- numoy library
+
+## Activation:
+- from main.py import LaneDetection to your project
+- in LaneDetection there is only one public function named detect
+- detect recives 3 arguments which the last two are optional
+- the first is the video file name you went to detect the lanes in
+- the output file name you want the program to write the output video into
+- lastly boolean for if you want the program to output a video file or not
+
+#### TlDr:
+- from main import LaneDetection
+- LaneDetection().detect(fileName, outputName, videoOutput)
+
+
 ## Assumptions:
 
 1. We found that in each tested video there is a somewhat triangle shaped region
