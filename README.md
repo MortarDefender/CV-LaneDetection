@@ -13,7 +13,7 @@
 - the output file name you want the program to write the output video into
 - lastly boolean for if you want the program to output a video file or not
 
-#### TlDr:
+#### TLDR:
 - from main import LaneDetection
 - LaneDetection().detect(fileName, outputName, videoOutput)
 
