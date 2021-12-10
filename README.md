@@ -14,8 +14,8 @@
 - lastly boolean for if you want the program to output a video file or not
 
 #### TLDR:
-- from main import LaneDetection
-- LaneDetection().detect(fileName, outputName, videoOutput)
+- `from main import LaneDetection`
+- `LaneDetection().detect(fileName, outputName, videoOutput)`
 
 
 ## Assumptions:
