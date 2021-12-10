@@ -25,12 +25,9 @@ class LaneDetection:
 
         self.__prevLeft = []
         self.__prevRight = []
-        # self.__lane_change = ''
-        # self.__frame = 0
     
     def __getVideoCapture(self, fileName):
-        """ return the video capture object 
-            if the object is already taken return None """
+        """ return the video capture object if the object is already taken return None """
             
         capture = cv2.VideoCapture(fileName)
     
@@ -56,17 +53,8 @@ class LaneDetection:
         """ remove noise from the curretnFrame using guassin / bilateralFilter """
         
         self.__currentFrame = cv2.GaussianBlur(self.__currentFrame, (d, d), sigma)
-        # self.__currentFrame = cv2.bilateralFilter(self.__currentFrame, d, sigma_r, sigma_s)
     
-    def __dilateFrame(self):
-        """ dilate the currentFrame """
-        
-        kernel = np.zeros((5,5),dtype=np.uint8)
-        kernel[2,:] = 1
-        kernel[:,2] = 1
-        self.__currentFrame = cv2.dilate(self.__currentFrame, kernel, iterations = 1)
-    
-    def __detectEdges(self, lowThreshold = 50, highThreshold = 150): # 300, 700
+    def __detectEdges(self, lowThreshold = 50, highThreshold = 150):
         """ detect the edges of the currentFrame using Canny """
         
         self.__currentFrame = cv2.Canny(self.__currentFrame, lowThreshold, highThreshold)
@@ -80,7 +68,7 @@ class LaneDetection:
         """ set the currentFrame to the road in a triangle shape """
         
         height = self.__currentFrame.shape[0]
-        left_x, right_x = 50, 1200 # Shachar vid: 440, 1500
+        left_x, right_x = 50, 1200
         topMiddlePoint = ((right_x + left_x) / 2, 340)
         buttomRightPoint = (right_x, height)
         buttomLeftPoint = (left_x, height)
@@ -89,10 +77,6 @@ class LaneDetection:
         mask = np.zeros_like(self.__currentFrame)
         cv2.fillPoly(mask, polygons, 255)
 
-        # new_left_point = ((buttomLeftPoint[0] + topMiddlePoint[0]) / 2, (buttomLeftPoint[1] + topMiddlePoint[1]) / 2)
-        # new_right_point = ((buttomRightPoint[0] + topMiddlePoint[0]) / 2, (buttomRightPoint[1] + topMiddlePoint[1]) / 2)
-        # polygons2 = np.array([[new_left_point, new_right_point, topMiddlePoint]]).astype(np.int)
-        # cv2.fillPoly(mask, polygons2, 0)
         self.__currentFrame = cv2.bitwise_and(self.__currentFrame, mask)
     
     def __createLines(self, maxDistance = 200, maxAngle = 1.2):
@@ -108,11 +92,7 @@ class LaneDetection:
                 cv2.line(lines_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
 
         except ValueError:
-            print(self.__linesDetected)
-            for item in self.__linesDetected:
-                for line in item:
-                    x1, y1, x2, y2 = line
-                    cv2.line(lines_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
+            pass
         
         self.__originalFrame = cv2.addWeighted(self.__originalFrame, 0.8, lines_image, 1, 1)
     
@@ -176,10 +156,12 @@ class LaneDetection:
         self.__prevLeft.append(self.__leftCords[0])
         if len(self.__prevLeft) > 10:
             _ = self.__prevLeft.pop(0)
+
         self.__prevRight.append(self.__rightCords[0])
         if len(self.__prevRight) > 10:
             _ = self.__prevRight.pop(0)
-
+        
+        # checks if there is a change in the direction and remove the line oposite to the direction
         if self.__movementDirection == self.__Direction.RIGHT:
             self.__linesDetected = np.array([self.__rightCords])
 
@@ -195,69 +177,40 @@ class LaneDetection:
         if self.__rightCords is None:
             return None
         
-        middlePointTop = (int(self.__originalFrame.shape[1] / 2), self.__originalFrame.shape[0] - 50)
-        middlePointBottom = (int(self.__originalFrame.shape[1] / 2), self.__originalFrame.shape[0] - 30)
-        middlePointText = (int(self.__originalFrame.shape[1] / 2) - 60, 100)
-        # middlePointText = (int(self.originalFrame.shape[1] / 2) - 200, 200) # for Shachar's vid
-        # diffrence = (self.__rightCords[0] - int(self.__originalFrame.shape[1] / 2)) - (int(self.__originalFrame.shape[1] / 2) - self.__leftCords[0])
-        
-        cv2.line(self.__originalFrame, middlePointBottom, middlePointTop, (255, 0, 0), 10)
-
-        # if diffrence > 400:
-        #     self.__movementDirection = self.__Direction.LEFT
-        #     print("maybe go left --> {}".format(diffrence))
-        # elif diffrence < -400:
-        #     self.__movementDirection = self.__Direction.RIGHT
-        #     print("maybe go Right -> {}".format(diffrence))
-        # else:
-        #     self.__movementDirection = self.__Direction.STRIGHT
-
-        middle_x = int(self.__originalFrame.shape[1] / 2)
         distance_th = 100
-        cv2.line(self.__originalFrame, (middle_x - distance_th, middlePointBottom[1]), (middle_x - 100, middlePointTop[1]), (0, 0, 255), 10)
-        cv2.line(self.__originalFrame, (middle_x + distance_th, middlePointBottom[1]), (middle_x + 100, middlePointTop[1]), (0, 0, 255), 10)
-
+        middle_x = int(self.__originalFrame.shape[1] / 2)
+        middlePointText = (int(self.__originalFrame.shape[1] / 2) - 60 , 100)
+        
         # Check left
-        count_left = 0
-        for left_x in self.__prevLeft:
-            if abs(left_x - middle_x) < distance_th:
-                count_left += 1
-        if count_left >= 5 and self.__movementDirection != LaneDetection.__Direction.RIGHT:
-            # print('Going Left!')
-            self.__movementDirection = LaneDetection.__Direction.LEFT
-        elif self.__movementDirection == LaneDetection.__Direction.LEFT:
-            # print('Finish Going Left!')
-            self.__movementDirection = LaneDetection.__Direction.STRIGHT
-
+        self.__checkDirection(self.__prevLeft, middle_x, distance_th, self.__Direction.RIGHT, self.__Direction.LEFT, self.__Direction.STRIGHT)
+        
         # Check right
-        count_right = 0
-        for right_x in self.__prevRight:
-            if abs(right_x - middle_x) < distance_th:
-                count_right += 1
-        if count_right >= 5 and self.__movementDirection != LaneDetection.__Direction.LEFT:
-            # print('Going Right!')
-            self.__movementDirection = LaneDetection.__Direction.RIGHT
-        elif self.__movementDirection == LaneDetection.__Direction.RIGHT:
-            # print('Finish Going Right!')
-            self.__movementDirection = LaneDetection.__Direction.STRIGHT
+        self.__checkDirection(self.__prevRight, middle_x, distance_th, self.__Direction.LEFT, self.__Direction.RIGHT, self.__Direction.STRIGHT)
 
         display_text = ''
-        if self.__movementDirection == LaneDetection.__Direction.RIGHT:
-            display_text = 'right'
-        elif self.__movementDirection == LaneDetection.__Direction.LEFT:
-            display_text = 'left'
+        if self.__movementDirection != self.__Direction.STRIGHT:
+            display_text = self.__movementDirection.name
 
-
-        # cv2.putText(self.__originalFrame, display_text,
-        #             middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 2, 2)
         cv2.putText(self.__originalFrame, display_text,
-                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 5, 2)
-        
-    def __detectLines(self, threshold = 100, radiusStep = 2, angleStep = np.pi / 180.0):  # 250
+                    middlePointText, cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5, 2)
+    
+    def __checkDirection(self, previosDirectionLane, middle, distanceThreshold, opositeDirection, wantedDirection, defaultDirection, maxFrames = 5):
+        """ check if the wanted direction was the current direction for maxFrames frames back """
+        laneShiftAmount = 0
+
+        for direction in previosDirectionLane:
+            if abs(direction - middle) < distanceThreshold:
+                laneShiftAmount += 1
+
+        if laneShiftAmount >= maxFrames and self.__movementDirection != opositeDirection:
+            self.__movementDirection = wantedDirection
+        elif self.__movementDirection == wantedDirection:
+            self.__movementDirection = defaultDirection
+    
+    def __detectLines(self, threshold = 100, radiusStep = 2, angleStep = np.pi / 180.0):
         """ detect lines in the image and show it """
         
         self.__linesDetected = cv2.HoughLinesP(self.__currentFrame, radiusStep, angleStep, threshold, np.array([]), minLineLength = 40, maxLineGap = 5)
-        # self.linesDetected = cv2.HoughLines(self.currentFrame, radiusStep, angleStep, threshold)
         self.__detectSides()
         self.__createLines()
         self.__drawMiddleLine()
@@ -265,7 +218,7 @@ class LaneDetection:
     def __showCurrentImage(self):
         """ show the original image """
         
-        cv2.imshow('Frame', self.__originalFrame) # __currentFrame # __originalFrame
+        cv2.imshow('Frame', self.__originalFrame)
     
     def __quitDetected(self):
         """ check if the user wants to quit """
@@ -281,7 +234,6 @@ class LaneDetection:
         
         self.__convertToGrey()
         self.__removeNoise()
-        # self.__dilateFrame()
         self.__detectEdges()
         self.__cropImage()
         self.__detectLines()
@@ -321,6 +273,4 @@ if __name__ == '__main__':
     with open('config.json', 'r') as json_file:
         config = json.load(json_file)
     
-    # LaneDetection().detect("dashCam.mp4")
-    # LaneDetection().detectLinesInImage(cv2.imread(config['test_image']))
-    LaneDetection().detect(config['test_video'], videoOutput=False)
+    LaneDetection().detect(config['test_video'], videoOutput=True)
