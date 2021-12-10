@@ -1,4 +1,4 @@
-### Computer vision: lane detection
+# Computer vision: lane detection
 
 ## Assumptions:
 
