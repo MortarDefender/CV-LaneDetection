@@ -25,19 +25,23 @@ and Hugh lines, we average the resulting points of each side using the slope to
 differentiate between right and left. We also removed lines with slope close to
 zero, aka horizontal lines because the lines of the lane are not a horizontal line.
 
-# Here a few examples of what the system outputs are:
+### Here a few examples of what the system outputs are:
 
-[<img align="left" alt="codeSTACKr.com" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX1.png" />][link]
+[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX1.png" />][link]
 
-[<img align="right" alt="codeSTACKr.com" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX2.png" />][link]
+***
 
-Here are a few pictures of behind the scenes that show how the computer see the
-image. The left one shows the picture in grey scale without the blur effect with canny
+[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/sideRoadEX2.png" />][link]
+
+### Here are a few pictures of behind the scenes that show how the computer see the image.
+The left one shows the picture in grey scale without the blur effect with canny
 and the right one shows the picture in grey scale with the blur effect.
 
-[<img align="left" alt="codeSTACKr.com" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithNoise.png" />][link]
+[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithNoise.png" />][link]
 
-[<img align="right" alt="codeSTACKr.com" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithoutNoise.png" />][link]
+***
+
+[<img align="left" width="100%" src="https://github.com/MortarDefender/CV-LaneDetection/blob/main/Demo%20Assets/roadWithoutNoise.png" />][link]
 
 <br />
 
