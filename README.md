@@ -8,7 +8,7 @@
 ### Installation:
 installation can be done using conda.
 
-```python
+```cmd
 conda activate
 python setup.py install
 ```
