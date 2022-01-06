@@ -3,7 +3,15 @@
 ## System Requirments:
 - python 3.6 or heighr
 - cv2 library
-- numoy library
+- numpy library
+
+### Installation:
+installation can be done using conda.
+
+```python
+conda activate
+python setup.py install
+```
 
 ## Activation:
 - from main.py import LaneDetection to your project
@@ -15,7 +23,7 @@
 
 #### TLDR:
 ```python
-from main import LaneDetection
+from laneDetection import LaneDetection
 LaneDetection().detect(fileName, outputName, videoOutput)
 ```
 

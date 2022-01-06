@@ -273,4 +273,4 @@ if __name__ == '__main__':
     with open('config.json', 'r') as json_file:
         config = json.load(json_file)
     
-    LaneDetection().detect(config['test_video'], videoOutput=True)
+    LaneDetection().detect(config['test_video'], videoOutput = True)
