@@ -1,5 +1,4 @@
 import cv2
-import json
 import numpy as np
 from enum import Enum
 
@@ -267,10 +266,3 @@ class LaneDetection:
             if videoOutput:
                 videoWriter.release()
         cv2.destroyAllWindows()
-
-
-if __name__ == '__main__':
-    with open('config.json', 'r') as json_file:
-        config = json.load(json_file)
-    
-    LaneDetection().detect(config['test_video'], videoOutput = True)
