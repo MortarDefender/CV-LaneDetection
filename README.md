@@ -1,6 +1,6 @@
 # Computer vision: lane detection
 
-## System Requirments:
+## System Requirements:
 - python 3.6 or heighr
 - cv2 library
 - numpy library
