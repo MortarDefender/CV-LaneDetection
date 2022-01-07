@@ -73,4 +73,7 @@ when the car will shift lanes the system will inform the change and detect where
 change in lane is, shift to the right or to the left.
 
 
+## Video Demo:
+<img src="/Demo%20Assets/Lane Detection Demo.gif" />
+
 [link]: https://github.com/MortarDefender/CV-LaneDetection
